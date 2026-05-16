@@ -6,9 +6,9 @@
 
 底部抽屉式弹出，全键盘操作，Tauri 2 + React + Rust，安装包 ~10 MB。专注做好一件事：**剪切板**。
 
-> 如果你想要 macOS 菜单栏图标的隐藏/收纳（被刘海挡住那个问题），看姊妹项目 [囤囤 (tuntun) 🐹](https://github.com/wangxiuwen/tuntun)。
+> 如果你想要 macOS 菜单栏图标的隐藏/收纳（被刘海挡住那个问题），看姊妹项目 [囤囤 (tuntun)](https://github.com/wangxiuwen/tuntun)。
 
-## ✨ 功能
+## 功能
 
 - **底部抽屉** — `⌘⇧V` 从屏幕底部全宽滑出，毛玻璃面板覆盖在当前 app 上
 - **自动分类** — 文本 / 链接 / 图片 / 代码 / 颜色，按内容启发式识别
@@ -20,7 +20,7 @@
 - **图片支持** — PNG 缩略图 + 完整数据，粘贴回还原
 - **系统托盘 mini 面板** — 点托盘图标弹出搜索框 + 最近 12 条，单击即复制回剪切板
 
-### ⌨️ 默认快捷键
+### 默认快捷键
 | 快捷键 | 动作 |
 |---|---|
 | `⌘⇧V` | 唤起 / 关闭抽屉 |
@@ -33,7 +33,7 @@
 | `Tab` | 切换类型 tab |
 | `Esc` | 关闭抽屉 |
 
-## 📦 下载
+## 下载
 
 [Releases 页](https://github.com/wangxiuwen/tietie/releases) 提供：
 
@@ -44,7 +44,7 @@
 | Windows 10/11 | `贴贴_x.y.z_x64-setup.exe` / `.msi` |
 | Linux | `tietie_x.y.z_amd64.deb` / `.AppImage` |
 
-## 🛠 本地开发
+## 本地开发
 
 依赖：`Node 20+`、`Rust stable`，Linux 还需要 `libwebkit2gtk-4.1-dev` 等（详见 CI 文件）。
 
@@ -54,7 +54,7 @@ npm run tauri:dev          # 开发热重载
 npm run tauri:build        # 出本平台安装包
 ```
 
-## 🏗 架构
+## 架构
 
 ```
 tietie/
@@ -76,7 +76,7 @@ tietie/
 - 600ms 剪切板轮询（macOS 没有官方 change notification API；用 polling 比 NSPasteboard.changeCount 监听简单且跨平台）
 - `tauri.conf` lto + codegen=1 + opt-level=s + strip，目标 release 二进制 ~6-8 MB
 
-## 🗺 路线图
+## 路线图
 
 - [x] **v0.1** — 剪切板抽屉 + 自动分类 + 托盘 mini 面板
 - [ ] **v0.2** — 完整 Library 全屏管理窗（mockup 4 号屏）
@@ -85,6 +85,6 @@ tietie/
 
 > 菜单栏图标隐藏/接管（Bartender 式）是单独的姊妹项目，与本剪切板项目解耦。
 
-## 📜 License
+## License
 
 MIT

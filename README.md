@@ -6,9 +6,9 @@ English · [简体中文](./README.zh-CN.md)
 
 Bottom-drawer popup, all-keyboard driven, Tauri 2 + React + Rust, ~10 MB installer. Does one thing well: **clipboard**.
 
-> Looking for menu-bar icon hiding (the macOS notch problem)? See the sister project [Tuntun (囤囤) 🐹](https://github.com/wangxiuwen/tuntun).
+> Looking for menu-bar icon hiding (the macOS notch problem)? See the sister project [Tuntun (囤囤)](https://github.com/wangxiuwen/tuntun).
 
-## ✨ Features
+## Features
 
 - **Bottom drawer** — `⌘⇧V` slides up a full-width frosted-glass panel over the current app
 - **Auto categorization** — text / link / image / code / color, detected by content heuristics
@@ -20,7 +20,7 @@ Bottom-drawer popup, all-keyboard driven, Tauri 2 + React + Rust, ~10 MB install
 - **Image support** — PNG thumbnails + full data, restored on paste
 - **Tray mini panel** — click the tray icon for a search box + most recent 12 items; click to paste back
 
-### ⌨️ Default shortcuts
+### Default shortcuts
 
 | Shortcut | Action |
 |---|---|
@@ -34,7 +34,7 @@ Bottom-drawer popup, all-keyboard driven, Tauri 2 + React + Rust, ~10 MB install
 | `Tab` | Switch type tabs |
 | `Esc` | Close drawer |
 
-## 📦 Download
+## Download
 
 [Releases](https://github.com/wangxiuwen/tietie/releases) ships:
 
@@ -47,7 +47,7 @@ Bottom-drawer popup, all-keyboard driven, Tauri 2 + React + Rust, ~10 MB install
 
 > macOS: the app is unsigned. On first launch open *System Settings → Privacy & Security* and click *Open Anyway*.
 
-## 🛠 Local development
+## Local development
 
 Requires `Node 20+`, `Rust stable`. Linux additionally needs `libwebkit2gtk-4.1-dev` and friends (see the CI files).
 
@@ -57,7 +57,7 @@ npm run tauri:dev     # dev with hot reload
 npm run tauri:build   # build native installer
 ```
 
-## 🏗 Architecture
+## Architecture
 
 ```
 tietie/
@@ -79,7 +79,7 @@ tietie/
 - 600 ms clipboard polling (macOS has no public change-notification API; polling is simpler and portable)
 - `tauri.conf` lto + codegen=1 + opt-level=s + strip → release binary ~6–8 MB
 
-## 🗺 Roadmap
+## Roadmap
 
 - [x] **v0.1** — drawer + auto-categorization + tray mini panel
 - [ ] **v0.2** — full-screen Library window (mockup screen 4)
@@ -88,6 +88,6 @@ tietie/
 
 > Menu-bar icon hiding (Bartender-style) lives in the sister project, decoupled from this one.
 
-## 📜 License
+## License
 
 MIT

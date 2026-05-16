@@ -25,7 +25,6 @@ pub fn run() {
 
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
@@ -97,10 +96,6 @@ pub fn run() {
             update_item_content,
             set_item_folder,
             get_item_image,
-            list_slots,
-            upsert_slot,
-            delete_slot,
-            launch_target,
             show_drawer,
             hide_window,
             open_settings,
@@ -119,12 +114,12 @@ pub fn run() {
 
 #[cfg(desktop)]
 fn create_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
-    let show = MenuItem::with_id(app, "show", "显示剪切板", true, Some("CmdOrCtrl+Shift+V"))?;
-    let stash = MenuItem::with_id(app, "stash", "打开收纳面板", true, None::<&str>)?;
+    let show = MenuItem::with_id(app, "show", "唤起剪切板", true, Some("CmdOrCtrl+Shift+V"))?;
+    let recent = MenuItem::with_id(app, "recent", "查看最近剪切板", true, None::<&str>)?;
     let sep = PredefinedMenuItem::separator(app)?;
     let about = MenuItem::with_id(app, "about", "关于贴贴", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&show, &stash, &sep, &about, &quit])?;
+    let menu = Menu::with_items(app, &[&show, &recent, &sep, &about, &quit])?;
 
     let _tray = TrayIconBuilder::with_id("main")
         .icon(tray_icon_image())
@@ -134,7 +129,7 @@ fn create_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id().as_ref() {
             "show" => toggle_drawer(app),
-            "stash" => toggle_tray_popover(app),
+            "recent" => toggle_tray_popover(app),
             "about" => {
                 let _ = app.emit("show-about", ());
             }
@@ -328,36 +323,6 @@ fn get_item_image(state: tauri::State<'_, AppState>, id: i64) -> Result<Vec<u8>,
         Some(b) => Ok(b),
         None => Err("no image blob".into()),
     }
-}
-
-#[tauri::command]
-fn list_slots(state: tauri::State<'_, AppState>) -> Result<Vec<db::LauncherSlot>, String> {
-    let conn = state.conn.lock();
-    db::list_slots(&conn).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn upsert_slot(
-    state: tauri::State<'_, AppState>,
-    slot_index: i64,
-    label: String,
-    target: String,
-    icon_path: Option<String>,
-) -> Result<(), String> {
-    let conn = state.conn.lock();
-    db::upsert_slot(&conn, slot_index, &label, &target, icon_path.as_deref())
-        .map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn delete_slot(state: tauri::State<'_, AppState>, slot_index: i64) -> Result<(), String> {
-    let conn = state.conn.lock();
-    db::delete_slot(&conn, slot_index).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn launch_target(target: String) -> Result<(), String> {
-    open::that(target).map_err(|e| e.to_string())
 }
 
 #[tauri::command]

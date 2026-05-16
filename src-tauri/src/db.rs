@@ -26,15 +26,6 @@ pub struct Folder {
     pub sort_order: i64,
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct LauncherSlot {
-    pub id: i64,
-    pub slot_index: i64,
-    pub label: String,
-    pub target: String,
-    pub icon_path: Option<String>,
-}
-
 pub fn open(path: &Path) -> SqlResult<Connection> {
     if let Some(parent) = path.parent() {
         let _ = std::fs::create_dir_all(parent);
@@ -74,14 +65,6 @@ pub fn open(path: &Path) -> SqlResult<Connection> {
         CREATE INDEX IF NOT EXISTS idx_clip_pinned ON clip_item(pinned DESC, used_at DESC);
         CREATE INDEX IF NOT EXISTS idx_clip_kind ON clip_item(kind, used_at DESC);
         CREATE UNIQUE INDEX IF NOT EXISTS idx_clip_hash ON clip_item(content_hash);
-
-        CREATE TABLE IF NOT EXISTS launcher_slot (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            slot_index INTEGER NOT NULL UNIQUE,
-            label TEXT NOT NULL,
-            target TEXT NOT NULL,
-            icon_path TEXT
-        );
 
         CREATE TABLE IF NOT EXISTS setting (
             key TEXT PRIMARY KEY,
@@ -260,47 +243,6 @@ pub fn create_folder(conn: &Connection, name: &str, color: &str) -> SqlResult<i6
 
 pub fn delete_folder(conn: &Connection, id: i64) -> SqlResult<()> {
     conn.execute("DELETE FROM folder WHERE id = ?1", params![id])?;
-    Ok(())
-}
-
-pub fn list_slots(conn: &Connection) -> SqlResult<Vec<LauncherSlot>> {
-    let mut stmt = conn.prepare(
-        "SELECT id, slot_index, label, target, icon_path FROM launcher_slot ORDER BY slot_index",
-    )?;
-    let xs = stmt
-        .query_map([], |row| {
-            Ok(LauncherSlot {
-                id: row.get(0)?,
-                slot_index: row.get(1)?,
-                label: row.get(2)?,
-                target: row.get(3)?,
-                icon_path: row.get(4)?,
-            })
-        })?
-        .collect::<SqlResult<Vec<_>>>()?;
-    Ok(xs)
-}
-
-pub fn upsert_slot(
-    conn: &Connection,
-    slot_index: i64,
-    label: &str,
-    target: &str,
-    icon_path: Option<&str>,
-) -> SqlResult<()> {
-    conn.execute(
-        "INSERT INTO launcher_slot (slot_index, label, target, icon_path) VALUES (?1, ?2, ?3, ?4)
-         ON CONFLICT(slot_index) DO UPDATE SET label=excluded.label, target=excluded.target, icon_path=excluded.icon_path",
-        params![slot_index, label, target, icon_path],
-    )?;
-    Ok(())
-}
-
-pub fn delete_slot(conn: &Connection, slot_index: i64) -> SqlResult<()> {
-    conn.execute(
-        "DELETE FROM launcher_slot WHERE slot_index = ?1",
-        params![slot_index],
-    )?;
     Ok(())
 }
 

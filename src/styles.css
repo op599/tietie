@@ -532,19 +532,47 @@ button {
   box-shadow: var(--bar-shadow);
 }
 
+.po-search {
+  padding: 10px 12px 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+.po-search input {
+  all: unset;
+  width: 100%;
+  font-size: 13px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  color: var(--text);
+}
+.po-search input::placeholder {
+  color: var(--text-3);
+}
+.po-scroll {
+  flex: 1;
+  overflow-y: auto;
+}
+.po-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.po-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 6px;
+}
+
 .po-section {
-  padding: 12px 14px;
+  padding: 10px 12px;
 }
 .po-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-3);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .po-link {
   font-size: 11px;
@@ -617,69 +645,21 @@ button {
   text-align: center;
 }
 
-.po-divider {
-  height: 1px;
-  background: rgba(0, 0, 0, 0.06);
-  margin: 0 14px;
-}
-
-.po-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-}
-.po-slot {
-  aspect-ratio: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.05);
-  font-size: 10px;
-  color: var(--text-2);
-  gap: 2px;
-}
-.po-slot.filled {
-  background: var(--card-bg);
-  border: 1px solid var(--card-stroke);
-}
-.po-slot.empty {
-  border: 1.5px dashed rgba(0, 0, 0, 0.18);
-  background: transparent;
-  color: var(--text-3);
-  font-size: 18px;
-}
-.po-slot:hover {
-  background: rgba(0, 122, 255, 0.1);
-}
-.po-slot-ic {
-  width: 28px;
-  height: 28px;
-  background: var(--accent);
-  color: white;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 600;
-}
-.po-slot-label {
-  font-size: 9.5px;
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .po-foot {
   margin-top: auto;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
+  padding: 8px 12px;
   border-top: 1px solid rgba(0, 0, 0, 0.06);
   background: rgba(0, 0, 0, 0.02);
+}
+.po-foot-hint {
+  font-size: 11px;
+  color: var(--text-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 .po-foot-btn {
   font-size: 11px;

@@ -192,12 +192,41 @@ fn position_drawer<R: Runtime>(win: &WebviewWindow<R>) {
         let scale = m.scale_factor();
         let target_w = size.width;
         let target_h = (DRAWER_HEIGHT as f64 * scale) as u32;
+
+        // dock_inset_px = points-of-dock × scale; 0 on non-mac
+        let dock_inset_px = mac_dock_inset_px(scale);
+
         let _ = win.set_size(PhysicalSize::new(target_w, target_h));
         let _ = win.set_position(PhysicalPosition::new(
             m.position().x,
-            m.position().y + size.height as i32 - target_h as i32,
+            m.position().y + size.height as i32 - target_h as i32 - dock_inset_px,
         ));
     }
+}
+
+#[cfg(target_os = "macos")]
+fn mac_dock_inset_px(scale: f64) -> i32 {
+    use objc2::MainThreadMarker;
+    use objc2_app_kit::NSScreen;
+    let Some(mtm) = MainThreadMarker::new() else {
+        return 0;
+    };
+    let Some(screen) = NSScreen::mainScreen(mtm) else {
+        return 0;
+    };
+    let frame = screen.frame();
+    let visible = screen.visibleFrame();
+    // Cocoa Y points up. Dock at bottom = visible.origin.y - frame.origin.y (in points).
+    let dock_pt = visible.origin.y - frame.origin.y;
+    if dock_pt <= 0.0 {
+        return 0;
+    }
+    (dock_pt * scale) as i32
+}
+
+#[cfg(not(target_os = "macos"))]
+fn mac_dock_inset_px(_scale: f64) -> i32 {
+    0
 }
 
 fn position_tray_popover<R: Runtime>(app: &AppHandle<R>, click: PhysicalPosition<f64>) {

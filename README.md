@@ -6,8 +6,6 @@ English · [简体中文](./README.zh-CN.md)
 
 Bottom-drawer popup, all-keyboard driven, Tauri 2 + React + Rust, ~10 MB installer. Does one thing well: **clipboard**.
 
-> Looking for menu-bar icon hiding (the macOS notch problem)? See the sister project [Tuntun (囤囤)](https://github.com/op599/tuntun).
-
 ## Features
 
 - **Bottom drawer** — `⌘⇧V` slides up a full-width frosted-glass panel over the current app
@@ -36,7 +34,7 @@ Bottom-drawer popup, all-keyboard driven, Tauri 2 + React + Rust, ~10 MB install
 
 ## Download
 
-[Releases](https://github.com/op599/tietie/releases) ships:
+[Releases](https://github.com/wangxiuwen/tietie/releases) ships:
 
 | Platform | Format |
 |---|---|
@@ -85,8 +83,6 @@ tietie/
 - [ ] **v0.2** — full-screen Library window (mockup screen 4)
 - [ ] **v0.2** — Settings panel (mockup screen 5) + long-press `⌘V` interception
 - [ ] **v0.3** — iCloud / WebDAV sync
-
-> Menu-bar icon hiding (Bartender-style) lives in the sister project, decoupled from this one.
 
 ## License
 

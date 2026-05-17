@@ -6,8 +6,6 @@
 
 底部抽屉式弹出，全键盘操作，Tauri 2 + React + Rust，安装包 ~10 MB。专注做好一件事：**剪切板**。
 
-> 如果你想要 macOS 菜单栏图标的隐藏/收纳（被刘海挡住那个问题），看姊妹项目 [囤囤 (tuntun)](https://github.com/op599/tuntun)。
-
 ## 功能
 
 - **底部抽屉** — `⌘⇧V` 从屏幕底部全宽滑出，毛玻璃面板覆盖在当前 app 上
@@ -35,7 +33,7 @@
 
 ## 下载
 
-[Releases 页](https://github.com/op599/tietie/releases) 提供：
+[Releases 页](https://github.com/wangxiuwen/tietie/releases) 提供：
 
 | 平台 | 包格式 |
 |---|---|
@@ -82,8 +80,6 @@ tietie/
 - [ ] **v0.2** — 完整 Library 全屏管理窗（mockup 4 号屏）
 - [ ] **v0.2** — 设置面板（mockup 5 号屏） + 拦截 ⌘V 长按
 - [ ] **v0.3** — iCloud / WebDAV 同步
-
-> 菜单栏图标隐藏/接管（Bartender 式）是单独的姊妹项目，与本剪切板项目解耦。
 
 ## License
 

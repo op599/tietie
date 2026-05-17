@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Tietie",
-  "version": "0.1.7",
-  "identifier": "com.tietie.app",
+  "version": "0.1.8",
+  "identifier": "com.wangxiuwen.tietie",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",

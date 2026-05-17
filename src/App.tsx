@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { writeText, writeImage } from "@tauri-apps/plugin-clipboard-manager";
+// clipboard plugin no longer needed at JS layer — Rust paste_item handles it
 import type { ClipItem, Folder, ItemKind } from "./types";
 import { KIND_LABEL } from "./types";
 
@@ -86,20 +86,10 @@ export default function App() {
   }, [items]);
 
   const paste = useCallback(async (item: ClipItem) => {
-    if (item.kind === "image") {
-      try {
-        const bytes = await invoke<number[]>("get_item_image", { id: item.id });
-        await writeImage(new Uint8Array(bytes));
-      } catch (e) {
-        console.error(e);
-      }
-    } else {
-      await writeText(item.content);
-    }
-    await invoke("touch_item", { id: item.id });
-    // paste_back hides the drawer, restores focus to the previously-active app,
-    // and synthesizes ⌘V so the content is actually pasted (not just copied).
-    await invoke("paste_back");
+    // Rust-side paste_item handles: write right pasteboard types
+    // (text+RTF+HTML for rich text, png for image), touch_item, then
+    // hide drawer + restore focus + synth ⌘V — all in one IPC.
+    await invoke("paste_item", { id: item.id });
   }, []);
 
   const togglePin = useCallback(async (id: number) => {
@@ -121,11 +111,11 @@ export default function App() {
   const saveEdit = useCallback(async (alsoPaste: boolean) => {
     if (!editing) return;
     await invoke("update_item_content", { id: editing.id, content: editValue });
+    const id = editing.id;
     setEditing(null);
     await refresh();
     if (alsoPaste) {
-      await writeText(editValue);
-      await invoke("paste_back");
+      await invoke("paste_item", { id });
     }
   }, [editing, editValue, refresh]);
 

@@ -2,6 +2,8 @@ mod clipboard;
 mod db;
 #[cfg(target_os = "macos")]
 mod paste;
+#[cfg(target_os = "macos")]
+mod richtext;
 
 use parking_lot::Mutex;
 use std::sync::Arc;
@@ -38,10 +40,14 @@ pub fn run() {
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, shortcut, event| {
                     if event.state() == ShortcutState::Pressed {
-                        let primary =
+                        let drawer =
                             Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyV);
-                        if shortcut == &primary {
+                        let shot =
+                            Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::Digit4);
+                        if shortcut == &drawer {
                             toggle_drawer(app);
+                        } else if shortcut == &shot {
+                            trigger_screenshot();
                         }
                     }
                 })
@@ -69,12 +75,16 @@ pub fn run() {
             #[cfg(desktop)]
             create_tray(app.handle())?;
 
-            // register hotkey
+            // register hotkeys
             #[cfg(desktop)]
             {
-                let primary = Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyV);
-                if let Err(e) = app.global_shortcut().register(primary) {
-                    log::warn!("register global shortcut failed: {e}");
+                let drawer = Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyV);
+                let shot = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::Digit4);
+                if let Err(e) = app.global_shortcut().register(drawer) {
+                    log::warn!("register drawer hotkey failed: {e}");
+                }
+                if let Err(e) = app.global_shortcut().register(shot) {
+                    log::warn!("register screenshot hotkey failed: {e}");
                 }
             }
 
@@ -83,6 +93,15 @@ pub fn run() {
                 position_drawer(&win);
                 #[cfg(target_os = "macos")]
                 let _ = win.set_visible_on_all_workspaces(true);
+            }
+
+            // Request Accessibility permission early — without it, synthesized
+            // ⌘V key events won't be accepted by other apps, so auto-paste fails
+            // silently with no UI hint.
+            #[cfg(target_os = "macos")]
+            {
+                let trusted = paste::ensure_accessibility_trust();
+                log::info!("Accessibility trusted: {trusted}");
             }
 
             Ok(())
@@ -101,6 +120,8 @@ pub fn run() {
             show_drawer,
             hide_window,
             paste_back,
+            paste_item,
+            screenshot,
             open_settings,
             quit_app,
         ])
@@ -119,10 +140,17 @@ pub fn run() {
 fn create_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     let show = MenuItem::with_id(app, "show", "唤起剪切板", true, Some("CmdOrCtrl+Shift+V"))?;
     let recent = MenuItem::with_id(app, "recent", "查看最近剪切板", true, None::<&str>)?;
+    let shot = MenuItem::with_id(
+        app,
+        "screenshot",
+        "截图到剪切板",
+        true,
+        Some("CmdOrCtrl+Ctrl+4"),
+    )?;
     let sep = PredefinedMenuItem::separator(app)?;
     let about = MenuItem::with_id(app, "about", "关于贴贴", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&show, &recent, &sep, &about, &quit])?;
+    let menu = Menu::with_items(app, &[&show, &recent, &shot, &sep, &about, &quit])?;
 
     let _tray = TrayIconBuilder::with_id("main")
         .icon(tray_icon_image())
@@ -133,6 +161,7 @@ fn create_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
         .on_menu_event(|app, event| match event.id().as_ref() {
             "show" => toggle_drawer(app),
             "recent" => toggle_tray_popover(app),
+            "screenshot" => trigger_screenshot(),
             "about" => {
                 let _ = app.emit("show-about", ());
             }
@@ -405,6 +434,56 @@ fn paste_back(app: AppHandle) -> Result<bool, String> {
     }
 }
 
+/// One-call paste: read item from DB, write the right pasteboard types
+/// (plain text + RTF/HTML for rich text; image for image; etc.), then
+/// hide drawer + restore focus + synth ⌘V. Replaces JS-side writeText/writeImage.
+#[tauri::command]
+fn paste_item(state: tauri::State<'_, AppState>, app: AppHandle, id: i64) -> Result<bool, String> {
+    let full = {
+        let conn = state.conn.lock();
+        db::get_full(&conn, id).map_err(|e| e.to_string())?
+    };
+
+    #[cfg(target_os = "macos")]
+    {
+        match full.kind.as_str() {
+            "image" => {
+                if let Some(png) = full.image_blob.as_deref() {
+                    write_image_pasteboard(png);
+                }
+            }
+            _ => {
+                richtext::write_rich(
+                    &full.content,
+                    full.rich_html.as_deref(),
+                    full.rich_rtf.as_deref(),
+                );
+            }
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = &full;
+    }
+
+    // Bump usage and trigger paste.
+    {
+        let conn = state.conn.lock();
+        let _ = db::touch_item(&conn, id);
+    }
+    paste_back(app)
+}
+
+#[cfg(target_os = "macos")]
+fn write_image_pasteboard(png: &[u8]) {
+    use objc2_app_kit::NSPasteboard;
+    use objc2_foundation::{NSData, NSString};
+    let pb = NSPasteboard::generalPasteboard();
+    pb.clearContents();
+    let data = NSData::with_bytes(png);
+    pb.setData_forType(Some(&data), &NSString::from_str("public.png"));
+}
+
 #[tauri::command]
 fn open_settings(app: AppHandle) {
     // For MVP, settings opens the drawer with a settings event the UI can react to.
@@ -412,6 +491,23 @@ fn open_settings(app: AppHandle) {
 }
 
 #[tauri::command]
+fn screenshot() {
+    trigger_screenshot();
+}
+
+#[tauri::command]
 fn quit_app(app: AppHandle) {
     app.exit(0);
+}
+
+/// Spawn macOS native interactive area screenshot, sent straight to clipboard.
+/// The clipboard polling thread will pick it up and store as a new image item.
+fn trigger_screenshot() {
+    #[cfg(target_os = "macos")]
+    {
+        // -i: interactive area select; -c: to clipboard; -x: silent (no shutter sound)
+        let _ = std::process::Command::new("/usr/sbin/screencapture")
+            .args(["-i", "-c", "-x"])
+            .spawn();
+    }
 }

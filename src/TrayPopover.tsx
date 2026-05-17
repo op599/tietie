@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import type { ClipItem } from "./types";
 import { KIND_LABEL } from "./types";
 
@@ -31,16 +30,8 @@ export default function TrayPopover() {
   }, [refresh]);
 
   const copyBack = async (it: ClipItem) => {
-    if (it.kind === "image") {
-      await invoke("show_drawer");
-      await getCurrentWindow().hide();
-      return;
-    }
-    await writeText(it.content);
-    await invoke("touch_item", { id: it.id });
     await getCurrentWindow().hide();
-    // Auto-paste into the previously-focused app.
-    await invoke("paste_back");
+    await invoke("paste_item", { id: it.id });
   };
 
   const filtered = (

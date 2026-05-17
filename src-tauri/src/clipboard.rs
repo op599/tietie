@@ -10,6 +10,12 @@ use tauri::{AppHandle, Emitter};
 const POLL_MS: u64 = 600;
 const MAX_HISTORY: i64 = 500;
 
+#[cfg(not(target_os = "macos"))]
+struct NoRich {
+    html: Option<String>,
+    rtf: Option<Vec<u8>>,
+}
+
 pub fn start_polling(app: AppHandle, conn: Arc<Mutex<rusqlite::Connection>>) {
     std::thread::spawn(move || {
         let mut clipboard = match Clipboard::new() {
@@ -32,6 +38,16 @@ pub fn start_polling(app: AppHandle, conn: Arc<Mutex<rusqlite::Connection>>) {
                     last_text_hash = Some(hash.clone());
                     last_image_hash = None;
                     let (kind, preview) = classify_text(&text);
+
+                    // Snapshot rich variants (HTML / RTF) from NSPasteboard if present.
+                    #[cfg(target_os = "macos")]
+                    let snap = crate::richtext::read_current();
+                    #[cfg(not(target_os = "macos"))]
+                    let snap = NoRich {
+                        html: None,
+                        rtf: None,
+                    };
+
                     let item = db::InsertItem {
                         kind,
                         content: &text,
@@ -41,6 +57,8 @@ pub fn start_polling(app: AppHandle, conn: Arc<Mutex<rusqlite::Connection>>) {
                         source_app: None,
                         byte_size: text.len() as i64,
                         image_blob: None,
+                        rich_html: snap.html.as_deref(),
+                        rich_rtf: snap.rtf.as_deref(),
                     };
                     let conn_g = conn.lock();
                     if let Err(e) = db::upsert_item(&conn_g, item) {
@@ -81,6 +99,8 @@ pub fn start_polling(app: AppHandle, conn: Arc<Mutex<rusqlite::Connection>>) {
                         source_app: None,
                         byte_size: png.len() as i64,
                         image_blob: Some(&png),
+                        rich_html: None,
+                        rich_rtf: None,
                     };
                     let conn_g = conn.lock();
                     if let Err(e) = db::upsert_item(&conn_g, item) {

@@ -58,7 +58,9 @@ pub fn open(path: &Path) -> SqlResult<Connection> {
             used_at INTEGER NOT NULL,
             use_count INTEGER NOT NULL DEFAULT 0,
             byte_size INTEGER NOT NULL DEFAULT 0,
-            image_blob BLOB
+            image_blob BLOB,
+            rich_html TEXT,
+            rich_rtf BLOB
         );
 
         CREATE INDEX IF NOT EXISTS idx_clip_used ON clip_item(used_at DESC);
@@ -72,6 +74,9 @@ pub fn open(path: &Path) -> SqlResult<Connection> {
         );
         "#,
     )?;
+    // Idempotent migrations for older databases (created before rich-text support).
+    let _ = conn.execute("ALTER TABLE clip_item ADD COLUMN rich_html TEXT", []);
+    let _ = conn.execute("ALTER TABLE clip_item ADD COLUMN rich_rtf BLOB", []);
     Ok(conn)
 }
 
@@ -115,6 +120,8 @@ pub struct InsertItem<'a> {
     pub source_app: Option<&'a str>,
     pub byte_size: i64,
     pub image_blob: Option<&'a [u8]>,
+    pub rich_html: Option<&'a str>,
+    pub rich_rtf: Option<&'a [u8]>,
 }
 
 /// Insert or bump used_at if hash already exists. Returns id.
@@ -136,8 +143,9 @@ pub fn upsert_item(conn: &Connection, it: InsertItem) -> SqlResult<i64> {
     }
     conn.execute(
         "INSERT INTO clip_item (kind, content, preview, meta, content_hash, source_app,
-                                created_at, used_at, use_count, byte_size, image_blob)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7, 0, ?8, ?9)",
+                                created_at, used_at, use_count, byte_size, image_blob,
+                                rich_html, rich_rtf)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7, 0, ?8, ?9, ?10, ?11)",
         params![
             it.kind,
             it.content,
@@ -148,9 +156,38 @@ pub fn upsert_item(conn: &Connection, it: InsertItem) -> SqlResult<i64> {
             now,
             it.byte_size,
             it.image_blob,
+            it.rich_html,
+            it.rich_rtf,
         ],
     )?;
     Ok(conn.last_insert_rowid())
+}
+
+pub struct FullItem {
+    pub kind: String,
+    pub content: String,
+    pub image_blob: Option<Vec<u8>>,
+    pub rich_html: Option<String>,
+    pub rich_rtf: Option<Vec<u8>>,
+}
+
+/// Read full payload for an item — used by paste_item to compose the
+/// right pasteboard write.
+pub fn get_full(conn: &Connection, id: i64) -> SqlResult<FullItem> {
+    conn.query_row(
+        "SELECT kind, content, image_blob, rich_html, rich_rtf
+         FROM clip_item WHERE id = ?1",
+        params![id],
+        |r| {
+            Ok(FullItem {
+                kind: r.get(0)?,
+                content: r.get(1)?,
+                image_blob: r.get(2)?,
+                rich_html: r.get(3)?,
+                rich_rtf: r.get(4)?,
+            })
+        },
+    )
 }
 
 pub fn touch_item(conn: &Connection, id: i64) -> SqlResult<()> {

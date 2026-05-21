@@ -15,7 +15,7 @@ use tauri::{
 };
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
-const DRAWER_HEIGHT: u32 = 360;
+const DRAWER_HEIGHT: u32 = 380;
 const TRAY_POPOVER_W: u32 = 320;
 const TRAY_POPOVER_H: u32 = 460;
 

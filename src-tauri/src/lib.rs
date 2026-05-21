@@ -59,6 +59,12 @@ pub fn run() {
 
     builder
         .setup(|app| {
+            // Hide from Dock + Cmd-Tab — clipboard utility lives in the tray,
+            // not in the foreground app list. Tray icon + ⌘⇧V hotkey are the
+            // only entry points needed.
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
             // open db in app local data dir
             let dir = app
                 .path()

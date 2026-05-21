@@ -424,31 +424,65 @@ button {
 
 .actions {
   position: absolute;
-  inset: auto 8px 8px 8px;
+  inset: auto 0 0 0;
   display: none;
-  gap: 4px;
-  background: rgba(0, 0, 0, 0.75);
-  padding: 4px;
-  border-radius: 10px;
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  background: linear-gradient(to top, var(--card-bg), rgba(255, 255, 255, 0));
+  border-radius: 0 0 13px 13px;
+}
+.card:hover .actions,
+.card.selected .actions {
+  display: flex;
 }
 .action {
   flex: 1;
-  height: 26px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  font-size: 11px;
-  color: #fff;
-  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 7px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition:
+    background 120ms ease,
+    transform 80ms ease,
+    box-shadow 120ms ease;
 }
 .action:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: #fafafa;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.action:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 .action.primary {
+  flex: 2;
   background: var(--accent);
+  color: white;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 6px rgba(0, 122, 255, 0.28);
+}
+.action.primary:hover {
+  background: var(--accent);
+  filter: brightness(1.08);
+}
+@media (prefers-color-scheme: dark) {
+  .action {
+    background: rgba(255, 255, 255, 0.92);
+    color: rgba(20, 20, 22, 0.92);
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+  .action:hover {
+    background: #ffffff;
+  }
 }
 
 /* edit card */

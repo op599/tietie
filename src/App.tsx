@@ -307,28 +307,6 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
     setAcc(ok);
   }, []);
 
-  useEffect(() => {
-    invoke<string>("app_version").then(setVersion);
-    recheck();
-    const t = setInterval(recheck, 1500);
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", onKey, true);
-    return () => {
-      clearInterval(t);
-      window.removeEventListener("keydown", onKey, true);
-    };
-  }, [recheck, onClose]);
-
-  const grant = useCallback(async () => {
-    await invoke("request_accessibility");
-    await invoke("open_accessibility_settings");
-  }, []);
-
   const checkForUpdate = useCallback(async () => {
     setUpd({ kind: "checking" });
     try {
@@ -346,6 +324,29 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
     } catch (e: unknown) {
       setUpd({ kind: "error", msg: e instanceof Error ? e.message : String(e) });
     }
+  }, []);
+
+  useEffect(() => {
+    invoke<string>("app_version").then(setVersion);
+    recheck();
+    checkForUpdate();
+    const t = setInterval(recheck, 1500);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("keydown", onKey, true);
+    };
+  }, [recheck, onClose, checkForUpdate]);
+
+  const grant = useCallback(async () => {
+    await invoke("request_accessibility");
+    await invoke("open_accessibility_settings");
   }, []);
 
   const downloadAndInstall = useCallback(async () => {
@@ -385,11 +386,13 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
             <span className="settings-label">版本</span>
             <span className="settings-value">
               <span>{version || "..."}</span>
-              {upd.kind === "idle" && (
-                <button className="btn ghost" onClick={checkForUpdate}>检查更新</button>
-              )}
               {upd.kind === "checking" && <span className="settings-tag muted">检查中…</span>}
-              {upd.kind === "uptodate" && <span className="settings-tag ok">已是最新</span>}
+              {upd.kind === "uptodate" && (
+                <>
+                  <span className="settings-tag ok">已是最新</span>
+                  <button className="btn ghost" onClick={checkForUpdate}>重新检查</button>
+                </>
+              )}
               {upd.kind === "available" && (
                 <button className="btn primary" onClick={downloadAndInstall}>
                   升级到 {upd.version}
@@ -401,11 +404,14 @@ function SettingsPanel({ onClose }: { onClose: () => void }) {
               {upd.kind === "ready" && (
                 <span className="settings-tag ok">即将重启…</span>
               )}
-              {upd.kind === "error" && (
-                <span className="settings-tag err" title={upd.msg}>更新失败</span>
+              {(upd.kind === "error" || upd.kind === "idle") && (
+                <button className="btn ghost" onClick={checkForUpdate}>检查更新</button>
               )}
             </span>
           </div>
+          {upd.kind === "error" && (
+            <pre className="settings-err">更新检查失败:{upd.msg}</pre>
+          )}
           {upd.kind === "available" && upd.notes && (
             <pre className="settings-notes">{upd.notes}</pre>
           )}

@@ -700,48 +700,51 @@ button {
   z-index: 10;
 }
 .settings-panel {
-  width: 420px;
-  max-width: 90%;
+  width: 640px;
+  max-width: 92%;
   background: var(--bar-bg);
   border: 1px solid var(--bar-stroke);
-  border-radius: 14px;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
-  padding: 14px 16px 16px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  padding: 18px 22px 20px;
 }
 .settings-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 .settings-head h3 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text);
 }
 .settings-close {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: 8px;
+  font-size: 16px;
   color: var(--text-2);
+  cursor: default;
 }
 .settings-close:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text);
 }
 .settings-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 .settings-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 32px;
   font-size: 13px;
   color: var(--text);
 }
@@ -772,6 +775,17 @@ button {
 .settings-tag.err {
   background: rgba(255, 45, 85, 0.15);
   color: var(--cat-image);
+}
+.settings-err {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--cat-image);
+  background: rgba(255, 45, 85, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 .settings-notes {
   margin: 0;

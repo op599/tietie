@@ -353,6 +353,14 @@ fn toggle_tray_popover<R: Runtime>(app: &AppHandle<R>) {
                 let _ = win.hide();
             }
             _ => {
+                // Snapshot frontmost app BEFORE we steal focus, so paste-back
+                // can return to it. Without this, clicking a tray row writes to
+                // the clipboard but the synthesized ⌘V goes to the wrong place.
+                #[cfg(target_os = "macos")]
+                {
+                    let mtm = unsafe { objc2::MainThreadMarker::new_unchecked() };
+                    paste::snapshot_frontmost(mtm);
+                }
                 let _ = win.show();
                 let _ = win.set_focus();
                 let _ = app.emit("show-tray", ());

@@ -193,8 +193,10 @@ export default function App() {
         return;
       }
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    // Capture phase — runs before the search input's own keydown handling,
+    // so preventDefault actually stops ⌘D / ⌘P / etc. from typing into search.
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [filtered, selectedIdx, tab, editing, paste, togglePin, deleteItem, startEdit]);
 
   // scroll selected into view

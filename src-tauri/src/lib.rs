@@ -331,17 +331,25 @@ fn round_drawer_window_corners<R: Runtime>(win: &WebviewWindow<R>, radius: f64) 
         fn CGPathRelease(path: *const c_void);
     }
 
-    /// Build a fresh CGPath: rectangle with only the top two corners rounded.
+    /// Build a fresh CGPath: full rounded rectangle (all four corners).
     /// Uses NSView's standard bottom-left origin (Y up).
-    unsafe fn make_top_rounded_path(w: f64, h: f64, r: f64) -> *mut c_void {
+    unsafe fn make_rounded_path(w: f64, h: f64, r: f64) -> *mut c_void {
         let path = CGPathCreateMutable();
         let nil = std::ptr::null();
-        CGPathMoveToPoint(path, nil, 0.0, 0.0);
-        CGPathAddLineToPoint(path, nil, 0.0, h - r);
-        CGPathAddQuadCurveToPoint(path, nil, 0.0, h, r, h);
-        CGPathAddLineToPoint(path, nil, w - r, h);
-        CGPathAddQuadCurveToPoint(path, nil, w, h, w, h - r);
-        CGPathAddLineToPoint(path, nil, w, 0.0);
+        // Start at bottom edge just past bottom-left corner
+        CGPathMoveToPoint(path, nil, r, 0.0);
+        // bottom edge → bottom-right
+        CGPathAddLineToPoint(path, nil, w - r, 0.0);
+        CGPathAddQuadCurveToPoint(path, nil, w, 0.0, w, r);
+        // right edge → top-right
+        CGPathAddLineToPoint(path, nil, w, h - r);
+        CGPathAddQuadCurveToPoint(path, nil, w, h, w - r, h);
+        // top edge → top-left
+        CGPathAddLineToPoint(path, nil, r, h);
+        CGPathAddQuadCurveToPoint(path, nil, 0.0, h, 0.0, h - r);
+        // left edge → back to bottom-left
+        CGPathAddLineToPoint(path, nil, 0.0, r);
+        CGPathAddQuadCurveToPoint(path, nil, 0.0, 0.0, r, 0.0);
         CGPathCloseSubpath(path);
         path
     }
@@ -358,7 +366,7 @@ fn round_drawer_window_corners<R: Runtime>(win: &WebviewWindow<R>, radius: f64) 
         if layer.is_null() {
             return;
         }
-        let path = make_top_rounded_path(w, h, r);
+        let path = make_rounded_path(w, h, r);
         let shape_layer: *mut AnyObject =
             msg_send![objc2::class!(CAShapeLayer), new];
         let _: () = msg_send![shape_layer, setPath: path];
@@ -399,6 +407,10 @@ fn round_drawer_window_corners<R: Runtime>(win: &WebviewWindow<R>, radius: f64) 
     }
 }
 
+/// Logical-pt margin between the drawer's bottom edge and the dock /
+/// screen bottom, so the bottom rounded corners aren't clipped flush.
+const DRAWER_BOTTOM_MARGIN: f64 = 14.0;
+
 fn position_drawer<R: Runtime>(win: &WebviewWindow<R>) {
     if let Ok(Some(m)) = win.current_monitor() {
         let size = m.size();
@@ -408,11 +420,15 @@ fn position_drawer<R: Runtime>(win: &WebviewWindow<R>) {
 
         // dock_inset_px = points-of-dock × scale; 0 on non-mac
         let dock_inset_px = mac_dock_inset_px(scale);
+        let margin_px = (DRAWER_BOTTOM_MARGIN * scale) as i32;
 
         let _ = win.set_size(PhysicalSize::new(target_w, target_h));
         let _ = win.set_position(PhysicalPosition::new(
             m.position().x,
-            m.position().y + size.height as i32 - target_h as i32 - dock_inset_px,
+            m.position().y + size.height as i32
+                - target_h as i32
+                - dock_inset_px
+                - margin_px,
         ));
     }
 }
